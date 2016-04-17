@@ -10,10 +10,10 @@ data Stmt
   | ConstStmt Text Expr
   | ReturnStmt Expr
   | ExprStmt Expr
-  | ForInStmt Text Expr [Stmt]
 
 data TypeExpr
   = NumberTypeExpr
+  | NameTypeExpr Text
   | ObjectTypeExpr [(Text, TypeExpr)]
   | TypeOfTypeExpr Expr
 

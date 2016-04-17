@@ -11,6 +11,7 @@ data Def
 
 data TypeExpr
   = NumberTypeExpr
+  | NameTypeExpr Text
   | InterfaceTypeExpr [(Text, TypeExpr)]
 
 data Expr

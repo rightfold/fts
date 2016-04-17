@@ -22,6 +22,7 @@ convertDef (FTS.ValueDef name value) =
 
 convertTypeExpr :: FTS.TypeExpr -> TS.TypeExpr
 convertTypeExpr (FTS.NumberTypeExpr) = TS.NumberTypeExpr
+convertTypeExpr (FTS.NameTypeExpr name) = TS.NameTypeExpr name
 convertTypeExpr (FTS.InterfaceTypeExpr fields) =
   TS.ObjectTypeExpr (fmap convertInterfaceField fields)
   where convertInterfaceField (name, type_) = (name, convertTypeExpr type_)

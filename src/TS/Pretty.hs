@@ -25,6 +25,13 @@ prettyStmt (TS.NamespaceStmt name body) =
               , indent $ Text.concat (map prettyStmt body)
               , "}\n"
               ]
+prettyStmt (TS.TypeStmt name type_) =
+  Text.concat [ "type "
+              , Text.fromStrict name
+              , " = "
+              , prettyTypeExpr type_
+              , ";\n"
+              ]
 prettyStmt (TS.ConstStmt name value) =
   Text.concat [ "const "
               , Text.fromStrict name
@@ -37,6 +44,7 @@ prettyStmt (TS.ExprStmt expr) = Text.concat [prettyExpr expr, ";\n"]
 
 prettyTypeExpr :: TS.TypeExpr -> Text
 prettyTypeExpr TS.NumberTypeExpr = "number"
+prettyTypeExpr (TS.NameTypeExpr name) = Text.fromStrict name
 prettyTypeExpr (TS.ObjectTypeExpr fields) =
   Text.concat ["{\n", indent $ Text.concat (map prettyField fields), "}"]
   where prettyField (name, type_) =

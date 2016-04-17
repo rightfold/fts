@@ -2,14 +2,23 @@
 module Main where
 
 import FTS.Convert (convertCompilationUnit)
+import FTS.Parse (compilationUnit)
+import Text.Parsec (eof, parse)
 import TS.Pretty (prettyProgram)
 
 import qualified Data.Text.Lazy.IO as Text
-import qualified FTS.AST as FTS
 
 main :: IO ()
-main = Text.putStrLn . prettyProgram $ convertCompilationUnit cu
-  where cu = [ftsNs]
-        ftsNs = FTS.NamespaceDef "FTS" [age]
-        age = FTS.ValueDef "age" (FTS.FieldLensExpr personTE "age")
-        personTE = FTS.InterfaceTypeExpr [("age", FTS.NumberTypeExpr)]
+main = do
+  let src = "namespace FTS {\n\
+            \    type Person = {age: number,};\n\
+            \    val age = Person#age;\n\
+            \    namespace Nested {\n\
+            \        val bad = number#quququ;\n\
+            \    }\n\
+            \}\n"
+  let cu' = parse (compilationUnit <* eof) "main.fts" src
+  case cu' of
+    Left e -> print e
+    Right ast -> Text.putStrLn . prettyProgram $ convertCompilationUnit ast
+

@@ -4,14 +4,14 @@ build-type:                 Simple
 cabal-version:              >=1.10
 
 library
-    build-depends:          base, text
+    build-depends:          base, parsec, text
     default-language:       Haskell2010
-    exposed-modules:        FTS.AST, FTS.Convert, TS.AST, TS.Pretty
+    exposed-modules:        FTS.AST, FTS.Convert, FTS.Lex, FTS.Parse, TS.AST, TS.Pretty
     ghc-options:            -Wall
     hs-source-dirs:         src
 
 executable fts-exe
-    build-depends:          base, fts, text
+    build-depends:          base, fts, parsec, text
     default-language:       Haskell2010
     ghc-options:            -Wall -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs:         app
