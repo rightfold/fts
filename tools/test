@@ -4,9 +4,21 @@ stack build
 stack test
 for f in end-to-end-test/*.fts; do
     echo "end-to-end test: $f"
-    stack exec ftsc "$f" > /tmp/fts-end-to-end-test.ts
+
+    echo > /tmp/fts-end-to-end-test.ts
+    echo 'function __clone<T>(value: T): T {
+    const result = {} as T;
+    for (let property in value) {
+        (result as any)[property] = (value as any)[property];
+    }
+    return result;
+}' >> /tmp/fts-end-to-end-test.ts
+    stack exec ftsc "$f" >> /tmp/fts-end-to-end-test.ts
     echo 'main();' >> /tmp/fts-end-to-end-test.ts
+
     tsc --noImplicitAny /tmp/fts-end-to-end-test.ts
+
     node /tmp/fts-end-to-end-test.js > /tmp/fts-end-to-end-test.txt
+
     diff /tmp/fts-end-to-end-test.txt "${f%.fts}.txt"
 done

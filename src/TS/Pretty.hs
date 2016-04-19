@@ -70,7 +70,11 @@ prettyExpr (TS.FunctionExpr params returnType body) =
   where prettyParam (name, Just type_) =
           Text.concat [Text.fromStrict name, ": ", prettyTypeExpr type_]
         prettyParam (name, Nothing) = Text.fromStrict name
-        prettyBody (TS.Expr expr) = prettyExpr expr
+        prettyBody (TS.Expr expr) =
+          let text = prettyExpr expr
+           in if Text.head text == '{'
+              then Text.concat ["(", text, ")"]
+              else text
         prettyBody (TS.Stmts stmts) =
           Text.concat ["{\n", indent $ Text.concat (map prettyStmt stmts), "}"]
 prettyExpr (TS.MemberExpr object member) =
