@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module FTS.Lex
 ( identifier
 
@@ -10,6 +11,8 @@ module FTS.Lex
 , pComma
 , pEqual
 , pHash
+, pHashGtGt
+, pHashLtLt
 , pSemicolon
 , pLBrace
 , pRBrace
@@ -54,7 +57,9 @@ p s = lexeme $ string s >> return ()
 pColon        = p ":"
 pComma        = p ","
 pEqual        = p "="
-pHash         = p "#"
+pHash         = p "#" >> notFollowedBy (string ">>" <|> string "<<")
+pHashGtGt     = p "#>>" >> return ("binary$hash$gt$gt" :: Text)
+pHashLtLt     = p "#<<" >> return ("binary$hash$lt$lt" :: Text)
 pSemicolon    = p ";"
 pLBrace       = p "{"
 pRBrace       = p "}"

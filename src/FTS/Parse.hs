@@ -4,8 +4,9 @@ module FTS.Parse
 
 import Control.Applicative ((<|>))
 import Data.List (foldl')
+import Data.Text (Text)
 import FTS.Lex
-import Text.Parsec (many, sepBy, try)
+import Text.Parsec (many, sepBy, optionMaybe, try)
 import Text.Parsec.Text (Parser)
 
 import qualified FTS.AST as FTS
@@ -64,7 +65,20 @@ interfaceTypeExpr = do
   return $ FTS.InterfaceTypeExpr fields
 
 expr :: Parser FTS.Expr
-expr = callExpr
+expr = composeExpr
+
+composeExpr :: Parser FTS.Expr
+composeExpr = binop RightAssoc (try pHashGtGt <|> pHashLtLt) callExpr
+
+data Assoc = RightAssoc
+
+binop :: Assoc -> Parser Text -> Parser FTS.Expr -> Parser FTS.Expr
+binop RightAssoc op next = do
+  l <- next
+  r' <- optionMaybe $ (,) <$> op <*> binop RightAssoc op next
+  return $ case r' of
+    Just (o, r) -> FTS.CallExpr (FTS.NameExpr o) [l, r]
+    Nothing -> l
 
 callExpr :: Parser FTS.Expr
 callExpr = foldl' FTS.CallExpr <$> primaryExpr <*> many argumentList
