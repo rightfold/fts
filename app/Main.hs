@@ -11,8 +11,9 @@ import qualified Data.Text.Lazy.IO as Text
 main :: IO ()
 main = do
   let src = "namespace FTS {\n\
-            \    type Person = {age: number,};\n\
+            \    type Person = {age: number};\n\
             \    val age = Person#age;\n\
+            \    val blah = compose(person, age);\n\
             \    namespace Nested {\n\
             \        val bad = number#quququ;\n\
             \    }\n\

@@ -28,6 +28,9 @@ convertTypeExpr (FTS.InterfaceTypeExpr fields) =
   where convertInterfaceField (name, type_) = (name, convertTypeExpr type_)
 
 convertExpr :: FTS.Expr -> TS.Expr
+convertExpr (FTS.NameExpr name) = TS.NameExpr name
+convertExpr (FTS.CallExpr callee arguments) =
+  TS.CallExpr (convertExpr callee) (map convertExpr arguments)
 convertExpr (FTS.FieldLensExpr type_ field) =
   TS.ObjectExpr [("get", getter), ("set", setter)]
   where n = TS.NameExpr; (~.) = TS.MemberExpr; (~=) = TS.AssignExpr; (~$) = TS.CallExpr

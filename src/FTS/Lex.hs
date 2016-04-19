@@ -13,6 +13,8 @@ module FTS.Lex
 , pSemicolon
 , pLBrace
 , pRBrace
+, pLParen
+, pRParen
 ) where
 
 import Control.Applicative ((<|>))
@@ -56,3 +58,5 @@ pHash         = p "#"
 pSemicolon    = p ";"
 pLBrace       = p "{"
 pRBrace       = p "}"
+pLParen       = p "("
+pRParen       = p ")"

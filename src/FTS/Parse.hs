@@ -3,8 +3,9 @@ module FTS.Parse
 ) where
 
 import Control.Applicative ((<|>))
+import Data.List (foldl')
 import FTS.Lex
-import Text.Parsec (many)
+import Text.Parsec (many, sepBy, try)
 import Text.Parsec.Text (Parser)
 
 import qualified FTS.AST as FTS
@@ -42,7 +43,6 @@ valueDef = do
   pSemicolon
   return $ FTS.ValueDef name value
 
-
 typeExpr :: Parser FTS.TypeExpr
 typeExpr = numberTypeExpr <|> nameTypeExpr <|> interfaceTypeExpr
 
@@ -55,17 +55,27 @@ nameTypeExpr = FTS.NameTypeExpr <$> identifier
 interfaceTypeExpr :: Parser FTS.TypeExpr
 interfaceTypeExpr = do
   pLBrace
-  fields <- many $ do
+  fields <- (`sepBy` pComma) $ do
     name <- identifier
     pColon
     type_ <- typeExpr
-    pComma
     return (name, type_)
   pRBrace
   return $ FTS.InterfaceTypeExpr fields
 
 expr :: Parser FTS.Expr
-expr = fieldLensExpr
+expr = callExpr
+
+callExpr :: Parser FTS.Expr
+callExpr = foldl' FTS.CallExpr <$> primaryExpr <*> many argumentList
+  where argumentList = do
+          pLParen
+          arguments <- expr `sepBy` pComma
+          pRParen
+          return arguments
+
+primaryExpr :: Parser FTS.Expr
+primaryExpr = try fieldLensExpr <|> nameExpr
 
 fieldLensExpr :: Parser FTS.Expr
 fieldLensExpr = do
@@ -73,3 +83,6 @@ fieldLensExpr = do
   pHash
   name <- identifier
   return $ FTS.FieldLensExpr type_ name
+
+nameExpr :: Parser FTS.Expr
+nameExpr = FTS.NameExpr <$> identifier

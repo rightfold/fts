@@ -15,4 +15,6 @@ data TypeExpr
   | InterfaceTypeExpr [(Text, TypeExpr)]
 
 data Expr
-  = FieldLensExpr TypeExpr Text
+  = NameExpr Text
+  | FieldLensExpr TypeExpr Text
+  | CallExpr Expr [Expr]
