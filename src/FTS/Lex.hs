@@ -22,7 +22,7 @@ module FTS.Lex
 
 import Control.Applicative ((<|>))
 import Data.Text (Text)
-import Text.Parsec (many, notFollowedBy, oneOf, string)
+import Text.Parsec (many, notFollowedBy, oneOf, string, try)
 import Text.Parsec.Text (Parser)
 
 import qualified Data.Text as Text
@@ -34,8 +34,10 @@ space :: Parser ()
 space = oneOf " \t\r\n" >> return ()
 
 identifier :: Parser Text
-identifier = lexeme $ cons <$> identifierHead <*> many identifierTail
-  where cons c cs = Text.pack (c : cs)
+identifier = try binary <|> custom
+  where binary = kBinary >> (try pHashGtGt <|> pHashLtLt)
+        custom = lexeme $ cons <$> identifierHead <*> many identifierTail
+        cons c cs = Text.pack (c : cs)
 
 identifierHead :: Parser Char
 identifierHead = oneOf $ ['a'..'z'] ++ ['A' .. 'Z'] ++ "_$"
@@ -46,6 +48,7 @@ identifierTail = identifierHead <|> oneOf ['0'..'9']
 k :: String -> Parser ()
 k s = lexeme $ string s >> notFollowedBy identifierTail
 
+kBinary       = k "binary"
 kNamespace    = k "namespace"
 kNumber       = k "number"
 kType         = k "type"

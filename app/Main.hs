@@ -12,6 +12,7 @@ main :: IO ()
 main = do
   let src = "namespace FTS {\n\
             \    type Person = {age: number};\n\
+            \    val binary#<< = fuckup;\n\
             \    val blah = record #<< person #<< Person#age;\n\
             \    val halb = age #>> person #>> record;\n\
             \    namespace Nested {\n\
