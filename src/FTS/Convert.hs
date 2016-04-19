@@ -16,9 +16,9 @@ convertDef :: FTS.Def -> [TS.Stmt]
 convertDef (FTS.NamespaceDef name body) =
   [TS.NamespaceStmt name (body >>= convertDef)]
 convertDef (FTS.TypeDef name type_) =
-  [TS.TypeStmt name (convertTypeExpr type_)]
+  [TS.ExportStmt $ TS.TypeStmt name (convertTypeExpr type_)]
 convertDef (FTS.ValueDef name value) =
-  [TS.ConstStmt name (convertExpr value)]
+  [TS.ExportStmt $ TS.ConstStmt name (convertExpr value)]
 
 convertTypeExpr :: FTS.TypeExpr -> TS.TypeExpr
 convertTypeExpr (FTS.NumberTypeExpr) = TS.NumberTypeExpr
@@ -29,8 +29,14 @@ convertTypeExpr (FTS.InterfaceTypeExpr fields) =
 
 convertExpr :: FTS.Expr -> TS.Expr
 convertExpr (FTS.NameExpr name) = TS.NameExpr name
+convertExpr (FTS.StringExpr value) = TS.StringExpr value
 convertExpr (FTS.CallExpr callee arguments) =
   TS.CallExpr (convertExpr callee) (map convertExpr arguments)
+convertExpr (FTS.MemberExpr object member) =
+  TS.MemberExpr (convertExpr object) member
+convertExpr (FTS.FunctionExpr [] returnType body) =
+  -- TODO: params
+  TS.FunctionExpr [] (convertTypeExpr <$> returnType) (TS.Expr $ convertExpr body)
 convertExpr (FTS.FieldLensExpr type_ field) =
   TS.ObjectExpr [("get", getter), ("set", setter)]
   where n = TS.NameExpr; (~.) = TS.MemberExpr; (~=) = TS.AssignExpr; (~$) = TS.CallExpr

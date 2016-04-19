@@ -6,7 +6,7 @@ import Control.Applicative ((<|>))
 import Data.List (foldl')
 import Data.Text (Text)
 import FTS.Lex
-import Text.Parsec (many, sepBy, optionMaybe, try)
+import Text.Parsec (choice, many, sepBy, optionMaybe, try)
 import Text.Parsec.Text (Parser)
 
 import qualified FTS.AST as FTS
@@ -81,15 +81,45 @@ binop RightAssoc op next = do
     Nothing -> l
 
 callExpr :: Parser FTS.Expr
-callExpr = foldl' FTS.CallExpr <$> primaryExpr <*> many argumentList
+callExpr = foldl' (flip ($)) <$> primaryExpr <*> many (argumentList <|> memberAccess)
   where argumentList = do
           pLParen
           arguments <- expr `sepBy` pComma
           pRParen
-          return arguments
+          return $ \f -> FTS.CallExpr f arguments
+        memberAccess = do
+          pDot
+          name <- identifier
+          return $ \f -> FTS.MemberExpr f name
 
 primaryExpr :: Parser FTS.Expr
-primaryExpr = try fieldLensExpr <|> nameExpr
+primaryExpr = choice [ stringExpr
+                     , blockExpr
+                     , try funExpr
+                     , try fieldLensExpr
+                     , nameExpr
+                     ]
+
+stringExpr :: Parser FTS.Expr
+stringExpr = FTS.StringExpr <$> stringLiteral
+
+blockExpr :: Parser FTS.Expr
+blockExpr = do
+  pLBrace
+  body <- expr -- TODO: multiple exprs
+  pSemicolon
+  pRBrace
+  return body
+
+funExpr :: Parser FTS.Expr
+funExpr = do
+  kFun
+  pLParen
+  -- TODO: parameters
+  pRParen
+  -- TODO: return type
+  body <- blockExpr
+  return $ FTS.FunctionExpr [] Nothing body
 
 fieldLensExpr :: Parser FTS.Expr
 fieldLensExpr = do

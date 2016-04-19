@@ -16,5 +16,8 @@ data TypeExpr
 
 data Expr
   = NameExpr Text
-  | FieldLensExpr TypeExpr Text
+  | StringExpr Text
   | CallExpr Expr [Expr]
+  | MemberExpr Expr Text
+  | FunctionExpr [(Text, Maybe TypeExpr)] (Maybe TypeExpr) Expr
+  | FieldLensExpr TypeExpr Text

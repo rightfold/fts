@@ -2,11 +2,16 @@
 module FTS.Lex
 ( identifier
 
+, stringLiteral
+
+, kBinary
+, kFun
 , kNamespace
 , kNumber
 , kType
 , kVal
 
+, pDot
 , pColon
 , pComma
 , pEqual
@@ -22,7 +27,7 @@ module FTS.Lex
 
 import Control.Applicative ((<|>))
 import Data.Text (Text)
-import Text.Parsec (many, notFollowedBy, oneOf, string, try)
+import Text.Parsec (char, many, noneOf, notFollowedBy, oneOf, string, try)
 import Text.Parsec.Text (Parser)
 
 import qualified Data.Text as Text
@@ -45,10 +50,14 @@ identifierHead = oneOf $ ['a'..'z'] ++ ['A' .. 'Z'] ++ "_$"
 identifierTail :: Parser Char
 identifierTail = identifierHead <|> oneOf ['0'..'9']
 
+stringLiteral :: Parser Text
+stringLiteral = lexeme $ Text.pack <$> (char '"' *> many (noneOf "\"") <* char '"')
+
 k :: String -> Parser ()
 k s = lexeme $ string s >> notFollowedBy identifierTail
 
 kBinary       = k "binary"
+kFun          = k "fun"
 kNamespace    = k "namespace"
 kNumber       = k "number"
 kType         = k "type"
@@ -57,6 +66,7 @@ kVal          = k "val"
 p :: String -> Parser ()
 p s = lexeme $ string s >> return ()
 
+pDot          = p "."
 pColon        = p ":"
 pComma        = p ","
 pEqual        = p "="

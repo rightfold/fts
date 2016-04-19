@@ -10,6 +10,7 @@ data Stmt
   | ConstStmt Text Expr
   | ReturnStmt Expr
   | ExprStmt Expr
+  | ExportStmt Stmt
 
 data TypeExpr
   = NumberTypeExpr
@@ -19,6 +20,7 @@ data TypeExpr
 
 data Expr
   = NameExpr Text
+  | StringExpr Text
   | ObjectExpr [(Text, Expr)]
   | FunctionExpr [(Text, Maybe TypeExpr)] (Maybe TypeExpr) FunctionExprBody
   | MemberExpr Expr Text

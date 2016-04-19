@@ -6,6 +6,7 @@ module TS.Pretty
 , prettyExpr
 ) where
 
+import Data.Monoid ((<>))
 import Data.Text.Lazy (Text)
 
 import qualified Data.Text.Lazy as Text
@@ -41,6 +42,7 @@ prettyStmt (TS.ConstStmt name value) =
               ]
 prettyStmt (TS.ReturnStmt expr) = Text.concat ["return ", prettyExpr expr, ";\n"]
 prettyStmt (TS.ExprStmt expr) = Text.concat [prettyExpr expr, ";\n"]
+prettyStmt (TS.ExportStmt stmt) = Text.concat ["export ", prettyStmt stmt]
 
 prettyTypeExpr :: TS.TypeExpr -> Text
 prettyTypeExpr TS.NumberTypeExpr = "number"
@@ -54,6 +56,7 @@ prettyTypeExpr (TS.TypeOfTypeExpr expr) =
 
 prettyExpr :: TS.Expr -> Text
 prettyExpr (TS.NameExpr name) = Text.fromStrict name
+prettyExpr (TS.StringExpr value) = "\"" <> Text.fromStrict value <> "\""
 prettyExpr (TS.ObjectExpr fields) =
   Text.concat ["{\n", indent $ Text.concat (map prettyField fields), "}"]
   where prettyField (name, value) =

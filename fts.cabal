@@ -10,18 +10,18 @@ library
     ghc-options:            -Wall
     hs-source-dirs:         src
 
-executable fts-exe
-    build-depends:          base, fts, parsec, text
+executable ftsc
+    build-depends:          base, bytestring, fts, parsec, text
     default-language:       Haskell2010
     ghc-options:            -Wall -threaded -rtsopts -with-rtsopts=-N
     hs-source-dirs:         app
     main-is:                Main.hs
 
-test-suite fts-test
+test-suite fts-unit-test
     build-depends:          base, fts
     default-language:       Haskell2010
     ghc-options:            -threaded -rtsopts -with-rtsopts=-N
     ghc-options:            -Wall
-    hs-source-dirs:         test
+    hs-source-dirs:         unit-test
     main-is:                Spec.hs
     type:                   exitcode-stdio-1.0
