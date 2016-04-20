@@ -16,9 +16,16 @@ module FTS.Lex
 , pComma
 , pEqual
 , pHash
+, pSemicolon
+
 , pHashGtGt
 , pHashLtLt
-, pSemicolon
+
+, pHashPlusTilde
+, pHashMinusTilde
+, pHashAsteriskTilde
+, pHashSlashTilde
+
 , pLBrace
 , pRBrace
 , pLParen
@@ -26,8 +33,9 @@ module FTS.Lex
 ) where
 
 import Control.Applicative ((<|>))
+import Control.Monad (when)
 import Data.Text (Text)
-import Text.Parsec (char, many, noneOf, notFollowedBy, oneOf, string, try)
+import Text.Parsec ((<?>), char, choice, many, noneOf, notFollowedBy, oneOf, string, try, unexpected)
 import Text.Parsec.Text (Parser)
 
 import qualified Data.Text as Text
@@ -39,9 +47,13 @@ space :: Parser ()
 space = oneOf " \t\r\n" >> return ()
 
 identifier :: Parser Text
-identifier = try binary <|> custom
-  where binary = kBinary >> (try pHashGtGt <|> pHashLtLt)
-        custom = lexeme $ cons <$> identifierHead <*> many identifierTail
+identifier = (try binary <|> custom) <?> "identifier"
+  where binary = kBinary >> (try pHashGtGt <|> pHashLtLt <|> pHashPlusTilde <|> pHashMinusTilde <|> pHashAsteriskTilde <|> pHashSlashTilde)
+        custom = lexeme $ do
+          name <- cons <$> identifierHead <*> many identifierTail
+          when (name `elem` ["binary", "fun", "namespace", "number", "type", "val"])
+            (unexpected "keyword")
+          return name
         cons c cs = Text.pack (c : cs)
 
 identifierHead :: Parser Char
@@ -66,15 +78,22 @@ kVal          = k "val"
 p :: String -> Parser ()
 p s = lexeme $ string s >> return ()
 
-pDot          = p "."
-pColon        = p ":"
-pComma        = p ","
-pEqual        = p "="
-pHash         = p "#" >> notFollowedBy (string ">>" <|> string "<<")
-pHashGtGt     = p "#>>" >> return ("binary$hash$gt$gt" :: Text)
-pHashLtLt     = p "#<<" >> return ("binary$hash$lt$lt" :: Text)
-pSemicolon    = p ";"
-pLBrace       = p "{"
-pRBrace       = p "}"
-pLParen       = p "("
-pRParen       = p ")"
+pDot                = p "."
+pColon              = p ":"
+pComma              = p ","
+pEqual              = p "="
+pSemicolon          = p ";"
+pHash               = p "#" >> notFollowedBy (choice . map string $ [">>", "<<", "+~", "-~", "*~", "/~"])
+
+pHashGtGt           = p "#>>" >> return ("binary$hash$gt$gt" :: Text)
+pHashLtLt           = p "#<<" >> return ("binary$hash$lt$lt" :: Text)
+
+pHashPlusTilde      = p "#+~" >> return ("binary$hash$plus$tilde" :: Text)
+pHashMinusTilde     = p "#-~" >> return ("binary$hash$minus$tilde" :: Text)
+pHashAsteriskTilde  = p "#*~" >> return ("binary$hash$asterisk$tilde" :: Text)
+pHashSlashTilde     = p "#/~" >> return ("binary$hash$slash$tilde" :: Text)
+
+pLBrace             = p "{"
+pRBrace             = p "}"
+pLParen             = p "("
+pRParen             = p ")"

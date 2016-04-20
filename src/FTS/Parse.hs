@@ -66,20 +66,18 @@ interfaceTypeExpr = do
   return $ FTS.InterfaceTypeExpr fields
 
 expr :: Parser FTS.Expr
-expr = composeExpr
+expr = setterExpr
+
+setterExpr :: Parser FTS.Expr
+setterExpr = binop RightAssoc op composeExpr
+  where op = choice [ try pHashPlusTilde
+                    , try pHashMinusTilde
+                    , try pHashAsteriskTilde
+                    ,     pHashSlashTilde
+                    ]
 
 composeExpr :: Parser FTS.Expr
 composeExpr = binop RightAssoc (try pHashGtGt <|> pHashLtLt) callExpr
-
-data Assoc = RightAssoc
-
-binop :: Assoc -> Parser Text -> Parser FTS.Expr -> Parser FTS.Expr
-binop RightAssoc op next = do
-  l <- next
-  (optionMaybe $ (,) <$> op <*> binop RightAssoc op next) <&> \case
-    Just (o, r) -> FTS.CallExpr (FTS.NameExpr o) [l, r]
-    Nothing -> l
-  where (<&>) = flip (<$>)
 
 callExpr :: Parser FTS.Expr
 callExpr = foldl' (flip ($)) <$> primaryExpr <*> many (argumentList <|> memberAccess)
@@ -131,3 +129,13 @@ fieldLensExpr = do
 
 nameExpr :: Parser FTS.Expr
 nameExpr = FTS.NameExpr <$> identifier
+
+data Assoc = RightAssoc
+
+binop :: Assoc -> Parser Text -> Parser FTS.Expr -> Parser FTS.Expr
+binop RightAssoc op next = do
+  l <- next
+  (optionMaybe . try $ (,) <$> op <*> binop RightAssoc op next) <&> \case
+    Just (o, r) -> FTS.CallExpr (FTS.NameExpr o) [l, r]
+    Nothing -> l
+  where (<&>) = flip (<$>)
