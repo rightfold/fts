@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 module Main
 ( main
@@ -18,16 +19,14 @@ import qualified Data.Text.Lazy.IO as Text
 import qualified Data.ByteString as ByteString
 
 main :: IO ()
-main = do
-  args <- getArgs
-  case args of
-    [] -> do
-      source <- ByteString.getContents
-      goUTF8 "<stdin>" source
-    [filename] -> do
-      source <- ByteString.readFile filename
-      goUTF8 filename source
-    _ -> exit "usage: ftsc [filename]"
+main = getArgs >>= \case
+         [] -> do
+           source <- ByteString.getContents
+           goUTF8 "<stdin>" source
+         [filename] -> do
+           source <- ByteString.readFile filename
+           goUTF8 filename source
+         _ -> exit "usage: ftsc [filename]"
 
 goUTF8 :: String -> ByteString -> IO ()
 goUTF8 filename source' =

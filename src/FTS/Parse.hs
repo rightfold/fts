@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 module FTS.Parse
 ( compilationUnit
 ) where
@@ -75,10 +76,10 @@ data Assoc = RightAssoc
 binop :: Assoc -> Parser Text -> Parser FTS.Expr -> Parser FTS.Expr
 binop RightAssoc op next = do
   l <- next
-  r' <- optionMaybe $ (,) <$> op <*> binop RightAssoc op next
-  return $ case r' of
+  (optionMaybe $ (,) <$> op <*> binop RightAssoc op next) <&> \case
     Just (o, r) -> FTS.CallExpr (FTS.NameExpr o) [l, r]
     Nothing -> l
+  where (<&>) = flip (<$>)
 
 callExpr :: Parser FTS.Expr
 callExpr = foldl' (flip ($)) <$> primaryExpr <*> many (argumentList <|> memberAccess)
