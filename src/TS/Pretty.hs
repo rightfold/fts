@@ -37,7 +37,7 @@ prettyStmt (TS.ConstStmt name value) =
   Text.concat [ "const "
               , Text.fromStrict name
               , " = "
-              , prettyExpr value
+              , parens 3 value
               , ";\n"
               ]
 prettyStmt (TS.ReturnStmt expr) = Text.concat ["return ", prettyExpr expr, ";\n"]
@@ -56,7 +56,7 @@ prettyTypeExpr (TS.TypeOfTypeExpr expr) =
 
 prettyExpr :: TS.Expr -> Text
 prettyExpr (TS.CommaExpr e es) =
-  Text.concat ["(", Text.intercalate ", " (map prettyExpr (e : es)), ")"]
+  Text.intercalate ", " (map (parens (-1)) (e : es))
 prettyExpr (TS.NameExpr name) = Text.fromStrict name
 prettyExpr (TS.StringExpr value) = "\"" <> Text.fromStrict value <> "\""
 prettyExpr (TS.ObjectExpr fields) =
@@ -73,7 +73,7 @@ prettyExpr (TS.FunctionExpr params returnType body) =
           Text.concat [Text.fromStrict name, ": ", prettyTypeExpr type_]
         prettyParam (name, Nothing) = Text.fromStrict name
         prettyBody (TS.Expr expr) =
-          let text = prettyExpr expr
+          let text = parens 0 expr
            in if Text.head text == '{'
               then Text.concat ["(", text, ")"]
               else text
@@ -95,9 +95,10 @@ parens n e | precedence e < n = Text.concat ["(", prettyExpr e, ")"]
            | otherwise = prettyExpr e
 
 precedence :: TS.Expr -> Int
+precedence (TS.CommaExpr _ _) = (-1)
 precedence (TS.NameExpr _) = 20
 precedence (TS.ObjectExpr _) = 20
-precedence (TS.FunctionExpr _ _ _) = (-1)
+precedence (TS.FunctionExpr _ _ _) = 0
 precedence (TS.MemberExpr _ _) = 18
 precedence (TS.CallExpr _ _) = 17
 precedence (TS.AssignExpr _ _) = 3
