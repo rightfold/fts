@@ -105,10 +105,9 @@ stringExpr = FTS.StringExpr <$> stringLiteral
 blockExpr :: Parser FTS.Expr
 blockExpr = do
   pLBrace
-  body <- expr -- TODO: multiple exprs
-  pSemicolon
+  body <- many (expr <* pSemicolon)
   pRBrace
-  return body
+  return $ FTS.BlockExpr body
 
 funExpr :: Parser FTS.Expr
 funExpr = do

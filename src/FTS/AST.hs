@@ -15,7 +15,8 @@ data TypeExpr
   | InterfaceTypeExpr [(Text, TypeExpr)]
 
 data Expr
-  = NameExpr Text
+  = BlockExpr [Expr]
+  | NameExpr Text
   | StringExpr Text
   | CallExpr Expr [Expr]
   | MemberExpr Expr Text

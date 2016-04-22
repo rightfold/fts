@@ -55,6 +55,8 @@ prettyTypeExpr (TS.TypeOfTypeExpr expr) =
   Text.concat ["typeof ", prettyExpr expr]
 
 prettyExpr :: TS.Expr -> Text
+prettyExpr (TS.CommaExpr e es) =
+  Text.concat ["(", Text.intercalate ", " (map prettyExpr (e : es)), ")"]
 prettyExpr (TS.NameExpr name) = Text.fromStrict name
 prettyExpr (TS.StringExpr value) = "\"" <> Text.fromStrict value <> "\""
 prettyExpr (TS.ObjectExpr fields) =

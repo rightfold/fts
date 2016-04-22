@@ -28,6 +28,10 @@ convertTypeExpr (FTS.InterfaceTypeExpr fields) =
   where convertInterfaceField (name, type_) = (name, convertTypeExpr type_)
 
 convertExpr :: FTS.Expr -> TS.Expr
+convertExpr (FTS.BlockExpr []) = TS.NameExpr "__undefined"
+convertExpr (FTS.BlockExpr [e]) = convertExpr e
+convertExpr (FTS.BlockExpr (e : es)) =
+  TS.CommaExpr (convertExpr e) (map convertExpr es)
 convertExpr (FTS.NameExpr name) = TS.NameExpr name
 convertExpr (FTS.StringExpr value) = TS.StringExpr value
 convertExpr (FTS.CallExpr callee arguments) =

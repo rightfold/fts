@@ -1,0 +1,8 @@
+namespace HelloWorld {
+    val main = fun() {
+        console.log("Hello, world!");
+        console.log("Wello, horld!");
+    };
+}
+
+val main = HelloWorld.main;
