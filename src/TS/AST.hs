@@ -19,8 +19,7 @@ data TypeExpr
   | TypeOfTypeExpr Expr
 
 data Expr
-  = CommaExpr Expr [Expr]
-  | NameExpr Text
+  = NameExpr Text
   | StringExpr Text
   | ObjectExpr [(Text, Expr)]
   | FunctionExpr [(Text, Maybe TypeExpr)] (Maybe TypeExpr) FunctionExprBody

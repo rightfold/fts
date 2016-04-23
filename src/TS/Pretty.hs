@@ -55,8 +55,6 @@ prettyTypeExpr (TS.TypeOfTypeExpr expr) =
   Text.concat ["typeof ", prettyExpr expr]
 
 prettyExpr :: TS.Expr -> Text
-prettyExpr (TS.CommaExpr e es) =
-  Text.intercalate ", " (map (parens (-1)) (e : es))
 prettyExpr (TS.NameExpr name) = Text.fromStrict name
 prettyExpr (TS.StringExpr value) = "\"" <> Text.fromStrict value <> "\""
 prettyExpr (TS.ObjectExpr fields) =
@@ -95,7 +93,6 @@ parens n e | precedence e < n = Text.concat ["(", prettyExpr e, ")"]
            | otherwise = prettyExpr e
 
 precedence :: TS.Expr -> Int
-precedence (TS.CommaExpr _ _) = (-1)
 precedence (TS.NameExpr _) = 20
 precedence (TS.ObjectExpr _) = 20
 precedence (TS.FunctionExpr _ _ _) = 0

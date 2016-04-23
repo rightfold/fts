@@ -3,7 +3,8 @@ module FTS.Convert
 ( convertCompilationUnit
 , convertDef
 , convertTypeExpr
-, convertExpr
+, convertExprToStmts
+, convertExprToExpr
 ) where
 
 import qualified FTS.AST as FTS
@@ -18,7 +19,7 @@ convertDef (FTS.NamespaceDef name body) =
 convertDef (FTS.TypeDef name type_) =
   [TS.ExportStmt $ TS.TypeStmt name (convertTypeExpr type_)]
 convertDef (FTS.ValueDef name value) =
-  [TS.ExportStmt $ TS.ConstStmt name (convertExpr value)]
+  [TS.ExportStmt $ TS.ConstStmt name (convertExprToExpr value)]
 
 convertTypeExpr :: FTS.TypeExpr -> TS.TypeExpr
 convertTypeExpr (FTS.NumberTypeExpr) = TS.NumberTypeExpr
@@ -27,21 +28,26 @@ convertTypeExpr (FTS.InterfaceTypeExpr fields) =
   TS.ObjectTypeExpr (fmap convertInterfaceField fields)
   where convertInterfaceField (name, type_) = (name, convertTypeExpr type_)
 
-convertExpr :: FTS.Expr -> TS.Expr
-convertExpr (FTS.BlockExpr []) = TS.NameExpr "__undefined"
-convertExpr (FTS.BlockExpr [e]) = convertExpr e
-convertExpr (FTS.BlockExpr (e : es)) =
-  TS.CommaExpr (convertExpr e) (map convertExpr es)
-convertExpr (FTS.NameExpr name) = TS.NameExpr name
-convertExpr (FTS.StringExpr value) = TS.StringExpr value
-convertExpr (FTS.CallExpr callee arguments) =
-  TS.CallExpr (convertExpr callee) (map convertExpr arguments)
-convertExpr (FTS.MemberExpr object member) =
-  TS.MemberExpr (convertExpr object) member
-convertExpr (FTS.FunctionExpr [] returnType body) =
-  -- TODO: params
-  TS.FunctionExpr [] (convertTypeExpr <$> returnType) (TS.Expr $ convertExpr body)
-convertExpr (FTS.FieldLensExpr type_ field) =
+convertExprToStmts :: (TS.Expr -> TS.Stmt) -> FTS.Expr -> [TS.Stmt]
+convertExprToStmts wrap (FTS.BlockExpr es@(_ : _)) =
+  (init es >>= convertExprToStmts TS.ExprStmt)
+  ++ [wrap . convertExprToExpr $ last es]
+convertExprToStmts wrap e = [wrap (convertExprToExpr e)]
+
+convertExprToExpr :: FTS.Expr -> TS.Expr
+convertExprToExpr (FTS.BlockExpr []) = TS.NameExpr "__undefined"
+convertExprToExpr (FTS.BlockExpr [e]) = convertExprToExpr e
+convertExprToExpr (FTS.NameExpr name) = TS.NameExpr name
+convertExprToExpr (FTS.StringExpr value) = TS.StringExpr value
+convertExprToExpr (FTS.CallExpr callee arguments) =
+  TS.CallExpr (convertExprToExpr callee) (map convertExprToExpr arguments)
+convertExprToExpr (FTS.MemberExpr object member) =
+  TS.MemberExpr (convertExprToExpr object) member
+convertExprToExpr (FTS.FunctionExpr [] returnType body) =
+  TS.FunctionExpr [] -- TODO: params
+                  (convertTypeExpr <$> returnType)
+                  (TS.Stmts $ convertExprToStmts TS.ReturnStmt body)
+convertExprToExpr (FTS.FieldLensExpr type_ field) =
   TS.ObjectExpr [("get", getter), ("set", setter)]
   where n = TS.NameExpr; (~.) = TS.MemberExpr; (~=) = TS.AssignExpr; (~$) = TS.CallExpr
         getter = TS.FunctionExpr [("c", Just $ convertTypeExpr type_)] Nothing
