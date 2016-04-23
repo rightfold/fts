@@ -40,7 +40,7 @@ convertDef (FTS.AlgebraicDef name case1 caseN) =
         factoryDef (caseName, params) =
           let factory = TS.FunctionExpr factoryParams
                                         factoryReturnType
-                                        (TS.Stmts [TS.ReturnStmt factoryNewExpr])
+                                        (TS.Expr factoryNewExpr)
               factoryParams = zipWith (\i t -> ( paramName i
                                                , Just $ convertTypeExpr t
                                                ))

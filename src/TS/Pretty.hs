@@ -129,3 +129,4 @@ precedence (TS.FunctionExpr _ _ _) = 0
 precedence (TS.MemberExpr _ _) = 18
 precedence (TS.CallExpr _ _) = 17
 precedence (TS.AssignExpr _ _) = 3
+precedence (TS.NewExpr _ _) = 18
