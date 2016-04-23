@@ -6,7 +6,10 @@ for f in end-to-end-test/*.fts; do
     echo "end-to-end test: $f"
 
     echo > /tmp/fts-end-to-end-test.ts
-    echo 'function __clone<T>(value: T): T {
+    echo '
+const __undefined: any = void 0;
+
+function __clone<T>(value: T): T {
     const result = {} as T;
     for (let property in value) {
         (result as any)[property] = (value as any)[property];

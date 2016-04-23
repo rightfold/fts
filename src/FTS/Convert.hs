@@ -60,3 +60,7 @@ convertExprToExpr (FTS.FieldLensExpr type_ field) =
                              , TS.ExprStmt ((n "clone" ~. field) ~= n "e")
                              , TS.ReturnStmt (n "clone")
                              ])
+convertExprToExpr e = iife (convertExprToStmts TS.ReturnStmt e)
+
+iife :: [TS.Stmt] -> TS.Expr
+iife ss = TS.CallExpr (TS.FunctionExpr [] Nothing (TS.Stmts ss)) []

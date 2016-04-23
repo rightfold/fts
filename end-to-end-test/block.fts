@@ -1,7 +1,8 @@
 namespace HelloWorld {
     val main = fun() {
-        console.log("Hello, world!");
-        console.log("Wello, horld!");
+        console.log({});
+        console.log({"Hello, world!";});
+        console.log({"ignored"; "Wello, horld!";});
     };
 }
 
