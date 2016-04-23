@@ -7,7 +7,7 @@ import Control.Applicative ((<|>))
 import Data.List (foldl')
 import Data.Text (Text)
 import FTS.Lex
-import Text.Parsec (choice, many, sepBy, optionMaybe, try)
+import Text.Parsec (choice, many, many1, sepBy, optionMaybe, try)
 import Text.Parsec.Text (Parser)
 
 import qualified FTS.AST as FTS
@@ -16,7 +16,7 @@ compilationUnit :: Parser FTS.CompilationUnit
 compilationUnit = many def
 
 def :: Parser FTS.Def
-def = namespaceDef <|> typeDef <|> valueDef
+def = namespaceDef <|> typeDef <|> valueDef <|> algebraicDef
 
 namespaceDef :: Parser FTS.Def
 namespaceDef = do
@@ -44,6 +44,21 @@ valueDef = do
   value <- expr
   pSemicolon
   return $ FTS.ValueDef name value
+
+algebraicDef :: Parser FTS.Def
+algebraicDef = do
+  kAlgebraic
+  name <- identifier
+  pLBrace
+  (case1 : caseN) <- many1 $ do
+    name <- identifier
+    pLParen
+    params <- typeExpr `sepBy` pComma
+    pRParen
+    pSemicolon
+    return (name, params)
+  pRBrace
+  return $ FTS.AlgebraicDef name case1 caseN
 
 typeExpr :: Parser FTS.TypeExpr
 typeExpr = numberTypeExpr <|> nameTypeExpr <|> interfaceTypeExpr

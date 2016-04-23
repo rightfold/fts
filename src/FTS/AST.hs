@@ -8,6 +8,7 @@ data Def
   = NamespaceDef Text [Def]
   | TypeDef Text TypeExpr
   | ValueDef Text Expr
+  | AlgebraicDef Text (Text, [TypeExpr]) [(Text, [TypeExpr])]
 
 data TypeExpr
   = NumberTypeExpr

@@ -1,0 +1,16 @@
+algebraic Unit {
+    unit();
+}
+
+algebraic Answer {
+    low(number);
+    high(number, number);
+    unknown();
+}
+
+algebraic List {
+    nil();
+    cons(number, List);
+}
+
+val main = fun() { };

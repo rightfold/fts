@@ -4,6 +4,7 @@ module FTS.Lex
 
 , stringLiteral
 
+, kAlgebraic
 , kBinary
 , kFun
 , kNamespace
@@ -51,7 +52,14 @@ identifier = (try binary <|> custom) <?> "identifier"
   where binary = kBinary >> (try pHashGtGt <|> pHashLtLt <|> pHashPlusTilde <|> pHashMinusTilde <|> pHashAsteriskTilde <|> pHashSlashTilde)
         custom = lexeme $ do
           name <- cons <$> identifierHead <*> many identifierTail
-          when (name `elem` ["binary", "fun", "namespace", "number", "type", "val"])
+          when (name `elem` [ "algebraic"
+                            , "binary"
+                            , "fun"
+                            , "namespace"
+                            , "number"
+                            , "type"
+                            , "val"
+                            ])
             (unexpected "keyword")
           return name
         cons c cs = Text.pack (c : cs)
@@ -68,6 +76,7 @@ stringLiteral = lexeme $ Text.pack <$> (char '"' *> many (noneOf "\"") <* char '
 k :: String -> Parser ()
 k s = lexeme $ string s >> notFollowedBy identifierTail
 
+kAlgebraic    = k "algebraic"
 kBinary       = k "binary"
 kFun          = k "fun"
 kNamespace    = k "namespace"

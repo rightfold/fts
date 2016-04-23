@@ -7,6 +7,10 @@ module FTS.Convert
 , convertExprToExpr
 ) where
 
+import Data.Function ((&))
+import Data.List (foldl1')
+
+import qualified Data.Text as Text
 import qualified FTS.AST as FTS
 import qualified TS.AST as TS
 
@@ -20,6 +24,38 @@ convertDef (FTS.TypeDef name type_) =
   [TS.ExportStmt $ TS.TypeStmt name (convertTypeExpr type_)]
 convertDef (FTS.ValueDef name value) =
   [TS.ExportStmt $ TS.ConstStmt name (convertExprToExpr value)]
+convertDef (FTS.AlgebraicDef name case1 caseN) =
+  map classDef cases ++ [typeDef] ++ map factoryDef cases
+  where cases = case1 : caseN
+        className caseName = Text.concat [name, "__", caseName]
+        paramName i = Text.pack ("_" ++ show (i :: Int))
+        classDef (caseName, params) =
+          let ctorParams =
+                -- HACK: "public " as part of name only accidentally works
+                zipWith (\i t -> ( Text.concat ["public ", paramName i]
+                                 , Just $ convertTypeExpr t
+                                 ))
+                        [0..] params
+           in TS.ClassStmt (className caseName) [("constructor", ctorParams, Nothing, [])]
+        factoryDef (caseName, params) =
+          let factory = TS.FunctionExpr factoryParams
+                                        factoryReturnType
+                                        (TS.Stmts [TS.ReturnStmt factoryNewExpr])
+              factoryParams = zipWith (\i t -> ( paramName i
+                                               , Just $ convertTypeExpr t
+                                               ))
+                                      [0..] params
+              factoryReturnType = Just $ TS.NameTypeExpr name
+              factoryNewExpr = TS.NewExpr (TS.NameExpr $ className caseName)
+                                          (map (TS.NameExpr . paramName)
+                                               [0..length params - 1])
+           in TS.ConstStmt caseName factory
+        typeDef = cases
+                  & map (className . fst)
+                  & map TS.NameTypeExpr
+                  & foldl1' TS.UnionTypeExpr
+                  & TS.TypeStmt name
+                  & TS.ExportStmt
 
 convertTypeExpr :: FTS.TypeExpr -> TS.TypeExpr
 convertTypeExpr (FTS.NumberTypeExpr) = TS.NumberTypeExpr

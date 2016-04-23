@@ -9,6 +9,7 @@ module TS.Pretty
 import Data.Monoid ((<>))
 import Data.Text.Lazy (Text)
 
+import qualified Data.Text
 import qualified Data.Text.Lazy as Text
 import qualified TS.AST as TS
 
@@ -43,6 +44,21 @@ prettyStmt (TS.ConstStmt name value) =
 prettyStmt (TS.ReturnStmt expr) = Text.concat ["return ", prettyExpr expr, ";\n"]
 prettyStmt (TS.ExprStmt expr) = Text.concat [prettyExpr expr, ";\n"]
 prettyStmt (TS.ExportStmt stmt) = Text.concat ["export ", prettyStmt stmt]
+prettyStmt (TS.ClassStmt name methods) =
+  Text.concat [ "class "
+              , Text.fromStrict name
+              , " {\n"
+              , indent . Text.concat $ map prettyMethod methods
+              , "}\n"
+              ]
+  where prettyMethod (name, params, returnType, body) =
+          Text.concat [ Text.fromStrict name
+                      , "("
+                      , Text.intercalate ", " $ map prettyParam params
+                      , ") {\n" -- TODO: return type
+                      , indent . Text.concat $ map prettyStmt body
+                      , "}\n"
+                      ]
 
 prettyTypeExpr :: TS.TypeExpr -> Text
 prettyTypeExpr TS.NumberTypeExpr = "number"
@@ -53,6 +69,8 @@ prettyTypeExpr (TS.ObjectTypeExpr fields) =
           Text.concat [Text.fromStrict name, ": ", prettyTypeExpr type_, ",\n"]
 prettyTypeExpr (TS.TypeOfTypeExpr expr) =
   Text.concat ["typeof ", prettyExpr expr]
+prettyTypeExpr (TS.UnionTypeExpr left right) =
+  Text.concat ["(", prettyTypeExpr left, " | ", prettyTypeExpr right, ")"]
 
 prettyExpr :: TS.Expr -> Text
 prettyExpr (TS.NameExpr name) = Text.fromStrict name
@@ -64,19 +82,12 @@ prettyExpr (TS.ObjectExpr fields) =
 prettyExpr (TS.FunctionExpr params returnType body) =
   Text.concat [ "("
               , Text.intercalate ", " (map prettyParam params)
-              , ") => " -- TODO: return type
+              , case returnType of
+                  Just t -> Text.concat ["): ", prettyTypeExpr t]
+                  Nothing -> ")"
+              , " => "
               , prettyBody body
               ]
-  where prettyParam (name, Just type_) =
-          Text.concat [Text.fromStrict name, ": ", prettyTypeExpr type_]
-        prettyParam (name, Nothing) = Text.fromStrict name
-        prettyBody (TS.Expr expr) =
-          let text = parens 0 expr
-           in if Text.head text == '{'
-              then Text.concat ["(", text, ")"]
-              else text
-        prettyBody (TS.Stmts stmts) =
-          Text.concat ["{\n", indent $ Text.concat (map prettyStmt stmts), "}"]
 prettyExpr (TS.MemberExpr object member) =
   Text.concat [parens 18 object, ".", Text.fromStrict member]
 prettyExpr (TS.CallExpr callee arguments) =
@@ -87,6 +98,25 @@ prettyExpr (TS.CallExpr callee arguments) =
               ]
 prettyExpr (TS.AssignExpr target source) =
   Text.concat [parens 3 target, " = ", parens 3 source]
+prettyExpr (TS.NewExpr ctor arguments) =
+  Text.concat [ "new "
+              , parens 17 ctor
+              , "("
+              , Text.intercalate ", " (map prettyExpr arguments)
+              , ")"
+              ]
+
+prettyParam :: (Data.Text.Text, Maybe TS.TypeExpr) -> Text
+prettyParam (name, Just type_) =
+  Text.concat [Text.fromStrict name, ": ", prettyTypeExpr type_]
+prettyParam (name, Nothing) = Text.fromStrict name
+prettyBody (TS.Expr expr) =
+  let text = parens 0 expr
+   in if Text.head text == '{'
+      then Text.concat ["(", text, ")"]
+      else text
+prettyBody (TS.Stmts stmts) =
+  Text.concat ["{\n", indent $ Text.concat (map prettyStmt stmts), "}"]
 
 parens :: Int -> TS.Expr -> Text
 parens n e | precedence e < n = Text.concat ["(", prettyExpr e, ")"]

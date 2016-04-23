@@ -11,12 +11,14 @@ data Stmt
   | ReturnStmt Expr
   | ExprStmt Expr
   | ExportStmt Stmt
+  | ClassStmt Text [(Text, [(Text, Maybe TypeExpr)], (Maybe TypeExpr), [Stmt])]
 
 data TypeExpr
   = NumberTypeExpr
   | NameTypeExpr Text
   | ObjectTypeExpr [(Text, TypeExpr)]
   | TypeOfTypeExpr Expr
+  | UnionTypeExpr TypeExpr TypeExpr
 
 data Expr
   = NameExpr Text
@@ -26,6 +28,7 @@ data Expr
   | MemberExpr Expr Text
   | CallExpr Expr [Expr]
   | AssignExpr Expr Expr
+  | NewExpr Expr [Expr]
 
 data FunctionExprBody
   = Expr Expr
