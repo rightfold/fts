@@ -49,7 +49,7 @@ convertDef (FTS.AlgebraicDef name case1 caseN) =
               factoryNewExpr = TS.NewExpr (TS.NameExpr $ className caseName)
                                           (map (TS.NameExpr . paramName)
                                                [0..length params - 1])
-           in TS.ConstStmt caseName factory
+           in TS.ExportStmt $ TS.ConstStmt caseName factory
         typeDef = cases
                   & map (className . fst)
                   & map TS.NameTypeExpr
